@@ -7,8 +7,10 @@ export class ApiError extends Error {
   }
 }
 
+import { appPath } from './base';
+
 export async function api<T>(path: string, body?: unknown, method?: 'PUT'): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetch(appPath(path), {
     method: method ?? (body === undefined ? 'GET' : 'POST'),
     headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),

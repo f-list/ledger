@@ -53,6 +53,8 @@ Compose refuses to start unless `SESSION_SECRET`, `WEBHOOK_SECRET`, and `WEBHOOK
 
 The app binds to `127.0.0.1:${PORT}` on the host (default 3000) — loopback only, so the reverse proxy is the sole public entry point. Inside the container the app always listens on 3000; `PORT` in `.env` controls only the host-side port.
 
+The app is subpath-agnostic: it can be mounted at the domain root or under a prefix (e.g. `location /_ledger/ { proxy_pass http://127.0.0.1:8080/; ... }` — the trailing slash on `proxy_pass` strips the prefix, which the app expects). Assets are built with relative URLs and the client derives its mount point from the page URL at runtime. Always access it with the trailing slash (`/_ledger/`, not `/_ledger`).
+
 Run behind a TLS-terminating reverse proxy (the app sets `trust proxy` and marks session cookies `Secure` on HTTPS requests). Point SubscribeStar's webhook setting at `https://<host>/api/webhook/<WEBHOOK_PATH_TOKEN>`.
 
 Operational notes:

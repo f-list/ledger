@@ -1,4 +1,5 @@
 import { api, ApiError, type User } from './api';
+import { appBase, appPath } from './base';
 import { renderEvents } from './events';
 import { renderSubscribers } from './subscribers';
 import { renderTiersPanel } from './tiers';
@@ -59,7 +60,7 @@ export function renderRegister(token: string, onSuccess: (user: User) => void): 
       password: data.get('password'),
     }).then(
       (user) => {
-        history.replaceState(null, '', '/');
+        history.replaceState(null, '', appBase);
         onSuccess(user);
       },
       (err: unknown) => showError(error, err),
@@ -102,7 +103,7 @@ export function renderShell(user: User, onLogout: () => void): void {
   app.querySelector('#invite-button')!.addEventListener('click', () => {
     api<{ token: string }>('/api/invites', {}).then(
       ({ token }) => {
-        inviteLink.value = `${location.origin}/register?token=${token}`;
+        inviteLink.value = `${location.origin}${appPath('register')}?token=${token}`;
         inviteResult.hidden = false;
       },
       () => {

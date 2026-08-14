@@ -1,5 +1,6 @@
 import './style.scss';
 import { api, type User } from './api';
+import { appBase } from './base';
 import { renderLogin, renderRegister, renderShell } from './views';
 
 function showShell(user: User): void {
@@ -11,8 +12,9 @@ function showLogin(): void {
 }
 
 async function boot(): Promise<void> {
-  const registerToken =
-    location.pathname === '/register' ? new URLSearchParams(location.search).get('token') : null;
+  const registerToken = location.pathname.endsWith('/register')
+    ? new URLSearchParams(location.search).get('token')
+    : null;
 
   let user: User | null = null;
   try {
@@ -25,7 +27,7 @@ async function boot(): Promise<void> {
     renderRegister(registerToken, showShell);
     return;
   }
-  if (location.pathname !== '/') history.replaceState(null, '', '/');
+  if (location.pathname !== appBase) history.replaceState(null, '', appBase);
   if (user) {
     showShell(user);
   } else {
