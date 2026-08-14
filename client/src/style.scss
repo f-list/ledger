@@ -182,3 +182,35 @@ $warn: #ffb74d;
 .events-more {
   margin-top: 1rem;
 }
+
+.tiers-panel {
+  padding: 0.8rem 1.5rem;
+  background: rgba($accent, 0.08);
+  border-bottom: 1px solid $border;
+
+  &[hidden] {
+    display: none;
+  }
+
+  &__hint,
+  &__status {
+    margin: 0.3rem 0;
+    color: $fg-muted;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0.4rem 0;
+
+    code {
+      min-width: 6rem;
+      color: $fg-muted;
+    }
+
+    input {
+      width: 16rem;
+    }
+  }
+}

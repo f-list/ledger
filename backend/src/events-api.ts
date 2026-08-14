@@ -42,6 +42,12 @@ eventsRouter.get('/api/events', (req, res) => {
   const pageSize = Math.min(limit ?? PAGE_LIMIT, PAGE_LIMIT);
   const rows = selectPage.all({ before: before ?? null, limit: pageSize }) as unknown as EventRow[];
 
+  const tierNames = new Map(
+    (db.prepare('SELECT tier_id, name FROM tiers').all() as unknown as { tier_id: string; name: string }[]).map(
+      (t) => [t.tier_id, t.name],
+    ),
+  );
+
   const events = rows.map((row) => {
     const display = extractDisplayFields(row.raw);
     return {
@@ -52,6 +58,7 @@ eventsRouter.get('/api/events', (req, res) => {
       subscriberId: row.subscriber_id,
       nickname: display.nickname,
       tierId: display.tierId,
+      tierName: display.tierId === null ? null : (tierNames.get(display.tierId) ?? null),
       costCents: display.costCents,
     };
   });

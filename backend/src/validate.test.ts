@@ -5,6 +5,8 @@ import {
   hashInviteToken,
   isInviteExpired,
   validatePassword,
+  validateTierId,
+  validateTierName,
   validateUsername,
 } from './validate.ts';
 
@@ -54,5 +56,26 @@ describe('validatePassword', () => {
     assert.equal(validatePassword('1234567'), false);
     assert.equal(validatePassword('x'.repeat(1025)), false);
     assert.equal(validatePassword(null), false);
+  });
+});
+
+describe('validateTierId', () => {
+  it('accepts numeric ids only', () => {
+    assert.equal(validateTierId('101735'), true);
+    assert.equal(validateTierId('1'), true);
+    assert.equal(validateTierId(''), false);
+    assert.equal(validateTierId('101735x'), false);
+    assert.equal(validateTierId('../users'), false);
+    assert.equal(validateTierId(101735), false);
+  });
+});
+
+describe('validateTierName', () => {
+  it('requires 1-64 chars after trimming', () => {
+    assert.equal(validateTierName('Basic'), true);
+    assert.equal(validateTierName('  Basic  '), true);
+    assert.equal(validateTierName('   '), false);
+    assert.equal(validateTierName('x'.repeat(65)), false);
+    assert.equal(validateTierName(undefined), false);
   });
 });

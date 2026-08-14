@@ -1,5 +1,6 @@
 import { api, ApiError, type User } from './api';
 import { renderEvents } from './events';
+import { renderTiersPanel } from './tiers';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 
@@ -71,6 +72,7 @@ export function renderShell(user: User, onLogout: () => void): void {
       <h1>f-list.ledger</h1>
       <nav>
         <span class="app-header__user"></span>
+        <button id="tiers-button" type="button">Tiers</button>
         <button id="invite-button" type="button">Generate invite</button>
         <button id="logout-button" type="button">Log out</button>
       </nav>
@@ -80,6 +82,7 @@ export function renderShell(user: User, onLogout: () => void): void {
       <button id="invite-copy" type="button">Copy</button>
       <span>Single use, expires in 7 days.</span>
     </div>
+    <div id="tiers-container"></div>
     <main id="content"></main>
   `;
 
@@ -107,5 +110,11 @@ export function renderShell(user: User, onLogout: () => void): void {
     void navigator.clipboard.writeText(inviteLink.value);
   });
 
-  renderEvents(app.querySelector<HTMLElement>('#content')!);
+  const content = app.querySelector<HTMLElement>('#content')!;
+  const tiersPanel = renderTiersPanel(app.querySelector<HTMLElement>('#tiers-container')!, () =>
+    renderEvents(content),
+  );
+  app.querySelector('#tiers-button')!.addEventListener('click', () => tiersPanel.toggle());
+
+  renderEvents(content);
 }

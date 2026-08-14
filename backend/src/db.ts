@@ -47,6 +47,13 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_events_subscriber ON events(subscriber_id, event_ts);
 
+  CREATE TABLE IF NOT EXISTS tiers (
+    tier_id     TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    updated_at  TEXT NOT NULL,
+    updated_by  INTEGER REFERENCES users(id)
+  );
+
   CREATE TABLE IF NOT EXISTS subscribers (
     subscriber_id   TEXT PRIMARY KEY,
     status          TEXT NOT NULL,

@@ -8,6 +8,7 @@ interface LedgerEvent {
   subscriberId: string | null;
   nickname: string | null;
   tierId: string | null;
+  tierName: string | null;
   costCents: number | null;
 }
 
@@ -53,7 +54,7 @@ function renderRow(event: LedgerEvent): HTMLTableRowElement {
     ),
     cell(event.eventType),
     cell(event.nickname ?? '(unknown)', event.subscriberId ? `Subscriber ID: ${event.subscriberId}` : undefined),
-    cell(event.tierId ?? '', event.tierId ? `Tier ID: ${event.tierId}` : undefined),
+    cell(event.tierName ?? event.tierId ?? '', event.tierId ? `Tier ID: ${event.tierId}` : undefined),
     cell(formatCost(event.costCents)),
   );
   return tr;

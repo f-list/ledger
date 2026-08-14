@@ -37,3 +37,12 @@ export function validateUsername(username: unknown): username is string {
 export function validatePassword(password: unknown): password is string {
   return typeof password === 'string' && password.length >= 8 && password.length <= 1024;
 }
+
+/** SubscribeStar tier ids are numeric; rejecting anything else also blocks path abuse. */
+export function validateTierId(tierId: unknown): tierId is string {
+  return typeof tierId === 'string' && /^\d{1,20}$/.test(tierId);
+}
+
+export function validateTierName(name: unknown): name is string {
+  return typeof name === 'string' && name.trim().length >= 1 && name.trim().length <= 64;
+}
