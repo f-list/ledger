@@ -5,6 +5,7 @@ import passport from 'passport';
 import { authRouter, requireAuth } from './auth.ts';
 import { config } from './config.ts';
 import { SqliteSessionStore } from './session-store.ts';
+import { webhookRouter } from './webhook.ts';
 
 const app = express();
 const clientDist = path.join(import.meta.dirname, '..', '..', 'client', 'dist');
@@ -12,7 +13,9 @@ const clientDist = path.join(import.meta.dirname, '..', '..', 'client', 'dist');
 // Behind a TLS-terminating reverse proxy in production.
 app.set('trust proxy', 1);
 
-// Piece 2's webhook route mounts here, before express.json() — it needs the raw body.
+// Mounted before express.json() (needs the raw body for HMAC verification) and
+// before the session/auth middleware (authenticated by signature, not session).
+app.use(webhookRouter);
 
 app.use(express.json());
 

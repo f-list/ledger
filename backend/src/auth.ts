@@ -1,4 +1,4 @@
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import argon2 from 'argon2';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
@@ -11,6 +11,7 @@ import {
   generateInviteToken,
   hashInviteToken,
   isInviteExpired,
+  timingSafeStringEqual,
   validatePassword,
   validateUsername,
 } from './validate.ts';
@@ -78,12 +79,6 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many attempts; try again later.' },
 });
-
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
-}
 
 /**
  * Returns the inviting user's id (null for the bootstrap invite) if the token

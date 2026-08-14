@@ -13,10 +13,23 @@ function sessionSecret(): string {
   return randomBytes(32).toString('hex');
 }
 
+function requiredInProduction(name: string, devFallback: string): string {
+  const fromEnv = process.env[name];
+  if (fromEnv) return fromEnv;
+  if (isProduction) {
+    console.error(`${name} must be set in production`);
+    process.exit(1);
+  }
+  console.warn(`${name} not set; using dev fallback "${devFallback}"`);
+  return devFallback;
+}
+
 export const config = {
   isProduction,
   port: Number(process.env.PORT) || 3000,
   dbPath: process.env.DB_PATH || 'data/ledger.db',
   sessionSecret: sessionSecret(),
   bootstrapInviteToken: process.env.BOOTSTRAP_INVITE_TOKEN,
+  webhookSecret: requiredInProduction('WEBHOOK_SECRET', 'dev-webhook-secret'),
+  webhookPathToken: requiredInProduction('WEBHOOK_PATH_TOKEN', 'dev'),
 };

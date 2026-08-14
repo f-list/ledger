@@ -33,4 +33,30 @@ db.exec(`
     data       TEXT NOT NULL,
     expires_at INTEGER NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS events (
+    id            INTEGER PRIMARY KEY,
+    received_at   TEXT NOT NULL,
+    event_type    TEXT NOT NULL,
+    event_ts      INTEGER NOT NULL,
+    subscriber_id TEXT,
+    attempt       INTEGER NOT NULL DEFAULT 1,
+    raw           TEXT NOT NULL,
+    request_id    TEXT UNIQUE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_events_subscriber ON events(subscriber_id, event_ts);
+
+  CREATE TABLE IF NOT EXISTS subscribers (
+    subscriber_id   TEXT PRIMARY KEY,
+    status          TEXT NOT NULL,
+    tier_id         TEXT,
+    cost_cents      INTEGER,
+    nickname        TEXT,
+    email           TEXT,
+    flist_account   TEXT,
+    notes           TEXT,
+    last_event_ts   INTEGER,
+    seeded          INTEGER NOT NULL DEFAULT 0
+  );
 `);

@@ -1,4 +1,15 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+
+/** SubscribeStar signs webhook bodies with hex(hmac_md5(secret, raw bytes)). */
+export function signBody(secret: string, rawBody: Buffer | string): string {
+  return createHmac('md5', secret).update(rawBody).digest('hex');
+}
+
+export function timingSafeStringEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
+}
 
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
