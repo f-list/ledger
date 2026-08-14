@@ -1,0 +1,20 @@
+$bg: #1a1a1a;
+$fg: #e8e8e8;
+$accent: #4fc3f7;
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: $bg;
+  color: $fg;
+}
+
+.container {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+
+  h1 {
+    color: $accent;
+  }
+}
