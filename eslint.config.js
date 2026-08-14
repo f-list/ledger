@@ -20,4 +20,11 @@ export default tseslint.config(
     files: ['**/*.js'],
     extends: [tseslint.configs.disableTypeChecked],
   },
+  {
+    // node:test's describe/it return promises that are not meant to be awaited
+    files: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'off',
+    },
+  },
 );

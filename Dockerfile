@@ -24,6 +24,8 @@ RUN npm ci --omit=dev
 COPY backend/src ./backend/src
 COPY --from=client-build /repo/client/dist ./client/dist
 
+RUN mkdir -p /app/data && chown node:node /app/data
+
 ENV NODE_ENV=production
 EXPOSE 3000
 

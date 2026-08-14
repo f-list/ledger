@@ -13,6 +13,7 @@
     "dev:backend": "npm run dev -w backend",
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w client",
+    "test": "npm run test -w backend",
     "typecheck": "tsc -p backend && tsc -p client",
     "lint": "eslint ."
   },

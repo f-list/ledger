@@ -5,3 +5,11 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
+      - DB_PATH=/app/data/ledger.db
+      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET must be set}
+      - BOOTSTRAP_INVITE_TOKEN=${BOOTSTRAP_INVITE_TOKEN:-}
+    volumes:
+      - data:/app/data
+
+volumes:
+  data:
