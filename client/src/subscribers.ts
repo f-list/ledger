@@ -44,6 +44,16 @@ function cell(text: string, title?: string): HTMLTableCellElement {
   return td;
 }
 
+function linkCell(text: string, href: string, title?: string): HTMLTableCellElement {
+  const td = document.createElement('td');
+  const a = document.createElement('a');
+  a.textContent = text;
+  a.href = href;
+  if (title) a.title = title;
+  td.append(a);
+  return td;
+}
+
 function renderRow(sub: Subscriber): HTMLTableRowElement {
   const tr = document.createElement('tr');
 
@@ -55,7 +65,11 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
 
   const changed = sub.statusChangedTs;
   tr.append(
-    cell(sub.nickname ?? '(unknown)', `Subscriber ID: ${sub.subscriberId}`),
+    (sub.nickname ?
+      linkCell(sub.nickname, `https://www.subscribestar.adult/subscribers/${sub.subscriberId}`, `Subscriber ID: ${sub.subscriberId}`) :
+      cell('(unknown)', sub.subscriberId ? `Subscriber ID: ${sub.subscriberId}` : undefined)
+    ),
+    cell(sub.subscriberId),
     statusCell,
     cell(
       changed === null ? '' : new Date(changed * 1000).toLocaleDateString(),
@@ -79,7 +93,7 @@ export function renderSubscribers(container: HTMLElement): void {
     </div>
     <table class="events-table subscribers-table" hidden>
       <thead>
-        <tr><th>Subscriber</th><th>Status</th><th>Since</th><th>Tier</th><th>Amount</th><th>Email</th><th>F-List</th><th>Notes</th></tr>
+        <tr><th>Subscriber</th><th>SubStar ID</th><th>Status</th><th>Since</th><th>Tier</th><th>Amount</th><th>Email</th><th>F-List</th><th>Notes</th></tr>
       </thead>
       <tbody></tbody>
     </table>

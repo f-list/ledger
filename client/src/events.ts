@@ -42,6 +42,16 @@ function cell(text: string, title?: string): HTMLTableCellElement {
   return td;
 }
 
+function linkCell(text: string, href: string, title?: string): HTMLTableCellElement {
+  const td = document.createElement('td');
+  const a = document.createElement('a');
+  a.textContent = text;
+  a.href = href;
+  if (title) a.title = title;
+  td.append(a);
+  return td;
+}
+
 function renderRow(event: LedgerEvent): HTMLTableRowElement {
   const tr = document.createElement('tr');
   const rowClass = ROW_CLASS[event.eventType];
@@ -53,7 +63,11 @@ function renderRow(event: LedgerEvent): HTMLTableRowElement {
       `Happened: ${formatTime(event.eventTs)}\nReceived: ${new Date(event.receivedAt).toLocaleString()}`,
     ),
     cell(event.eventType),
-    cell(event.nickname ?? '(unknown)', event.subscriberId ? `Subscriber ID: ${event.subscriberId}` : undefined),
+    (event.nickname ?
+      linkCell(event.nickname, `https://www.subscribestar.adult/subscribers/${event.subscriberId}`, `Subscriber ID: ${event.subscriberId}`) :
+      cell('(unknown)', event.subscriberId ? `Subscriber ID: ${event.subscriberId}` : undefined)
+    ),
+    cell(event.subscriberId ?? ''),
     cell(event.tierName ?? event.tierId ?? '', event.tierId ? `Tier ID: ${event.tierId}` : undefined),
     cell(formatCost(event.costCents)),
   );
@@ -64,7 +78,7 @@ export function renderEvents(container: HTMLElement): void {
   container.innerHTML = `
     <table class="events-table" hidden>
       <thead>
-        <tr><th>Time</th><th>Event</th><th>Subscriber</th><th>Tier</th><th>Amount</th></tr>
+        <tr><th>Time</th><th>Event</th><th>Subscriber</th><th>ID</th><th>Tier</th><th>Amount</th></tr>
       </thead>
       <tbody></tbody>
     </table>

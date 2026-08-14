@@ -280,3 +280,11 @@ $warn: #ffb74d;
     }
   }
 }
+
+a, a:link, a:visited {
+  color: #9a9aff;
+  text-decoration: none;
+}
+a:hover, a:active {
+  color: #d994d9;
+}
