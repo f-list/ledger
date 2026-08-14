@@ -51,6 +51,8 @@ docker compose up --build -d
 
 Compose refuses to start unless `SESSION_SECRET`, `WEBHOOK_SECRET`, and `WEBHOOK_PATH_TOKEN` are set (environment or `.env`). The SQLite database lives in the `data` named volume – back that up.
 
+The app binds to `127.0.0.1:${PORT}` on the host (default 3000) — loopback only, so the reverse proxy is the sole public entry point. Inside the container the app always listens on 3000; `PORT` in `.env` controls only the host-side port.
+
 Run behind a TLS-terminating reverse proxy (the app sets `trust proxy` and marks session cookies `Secure` on HTTPS requests). Point SubscribeStar's webhook setting at `https://<host>/api/webhook/<WEBHOOK_PATH_TOKEN>`.
 
 Operational notes:
