@@ -4,6 +4,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { authRouter, requireAuth } from './auth.ts';
 import { config } from './config.ts';
+import { eventsRouter } from './events-api.ts';
 import { SqliteSessionStore } from './session-store.ts';
 import { webhookRouter } from './webhook.ts';
 
@@ -47,6 +48,7 @@ app.use('/api', (req, res, next) => {
 });
 
 app.use(authRouter);
+app.use(eventsRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

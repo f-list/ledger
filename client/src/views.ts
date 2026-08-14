@@ -1,4 +1,5 @@
 import { api, ApiError, type User } from './api';
+import { renderEvents } from './events';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 
@@ -79,9 +80,7 @@ export function renderShell(user: User, onLogout: () => void): void {
       <button id="invite-copy" type="button">Copy</button>
       <span>Single use, expires in 7 days.</span>
     </div>
-    <main id="content">
-      <p class="placeholder">Event ledger coming soon.</p>
-    </main>
+    <main id="content"></main>
   `;
 
   app.querySelector<HTMLSpanElement>('.app-header__user')!.textContent = user.username;
@@ -107,4 +106,6 @@ export function renderShell(user: User, onLogout: () => void): void {
   app.querySelector('#invite-copy')!.addEventListener('click', () => {
     void navigator.clipboard.writeText(inviteLink.value);
   });
+
+  renderEvents(app.querySelector<HTMLElement>('#content')!);
 }

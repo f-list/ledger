@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   deriveSubscriber,
+  extractDisplayFields,
   fallbackDedupeKey,
   isKnownEventType,
   parseEnvelope,
@@ -138,6 +139,22 @@ describe('isKnownEventType', () => {
     assert.equal(isKnownEventType('email_unshared'), true);
     assert.equal(isKnownEventType('mystery_event'), false);
     assert.equal(isKnownEventType(null), false);
+  });
+});
+
+describe('extractDisplayFields', () => {
+  it('extracts nickname, tier, and cost from subscription events', () => {
+    const fields = extractDisplayFields(subscriptionEvent('new_subscription', 1000).raw);
+    assert.deepEqual(fields, { nickname: 'TestSub', tierId: '101735', costCents: 299 });
+  });
+
+  it('extracts pledger and amount from payment events', () => {
+    const fields = extractDisplayFields(paymentEvent(1000).raw);
+    assert.deepEqual(fields, { nickname: 'TestSub', tierId: '101735', costCents: 299 });
+  });
+
+  it('returns nulls for garbage', () => {
+    assert.deepEqual(extractDisplayFields('not json'), { nickname: null, tierId: null, costCents: null });
   });
 });
 

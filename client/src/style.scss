@@ -122,8 +122,63 @@ input {
 
 #content {
   padding: 1.5rem;
+}
 
-  .placeholder {
+$good: #66bb6a;
+$warn: #ffb74d;
+
+.events-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
     color: $fg-muted;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-bottom: 1px solid $border;
   }
+
+  td {
+    padding: 0.4rem 0.8rem;
+    border-bottom: 1px solid rgba($border, 0.5);
+  }
+
+  td:last-child {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  tbody tr {
+    border-left: 3px solid transparent;
+
+    &:hover {
+      background: $bg-raised;
+    }
+  }
+
+  .event-row--good {
+    border-left-color: $good;
+  }
+
+  .event-row--bad {
+    border-left-color: $danger;
+  }
+
+  .event-row--warn {
+    border-left-color: $warn;
+  }
+}
+
+.events-empty,
+.events-error {
+  color: $fg-muted;
+}
+
+.events-error {
+  color: $danger;
+}
+
+.events-more {
+  margin-top: 1rem;
 }

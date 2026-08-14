@@ -101,6 +101,33 @@ export function stripShippingAddress(raw: string, eventType: string | null): str
   }
 }
 
+export interface DisplayFields {
+  nickname: string | null;
+  tierId: string | null;
+  costCents: number | null;
+}
+
+/** Display fields for the ledger UI — extracted server-side so the raw payload never leaves the backend. */
+export function extractDisplayFields(raw: string): DisplayFields {
+  let body: Json;
+  try {
+    body = asObject(JSON.parse(raw));
+  } catch {
+    return { nickname: null, tierId: null, costCents: null };
+  }
+  const payload = asObject(body.payload);
+  const subscription = asObject(payload.subscription);
+  const payment = asObject(payload.payment);
+  const person = asObject(
+    Object.keys(asObject(payload.subscriber)).length > 0 ? payload.subscriber : payload.pledger,
+  );
+  return {
+    nickname: asStringOrNull(person.nickname),
+    tierId: idOrNull(subscription.tier_id) ?? idOrNull(payment.tier_id),
+    costCents: asNumberOrNull(subscription.cost) ?? asNumberOrNull(payment.amount),
+  };
+}
+
 const SUBSCRIPTION_EVENTS = new Set([
   'new_subscription',
   'subscription_cancelled',
