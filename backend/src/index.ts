@@ -5,6 +5,7 @@ import passport from 'passport';
 import { authRouter, requireAuth } from './auth.ts';
 import { config } from './config.ts';
 import { eventsRouter } from './events-api.ts';
+import { subscribersRouter } from './subscribers-api.ts';
 import { tiersRouter } from './tiers-api.ts';
 import { SqliteSessionStore } from './session-store.ts';
 import { webhookRouter } from './webhook.ts';
@@ -51,6 +52,7 @@ app.use('/api', (req, res, next) => {
 app.use(authRouter);
 app.use(eventsRouter);
 app.use(tiersRouter);
+app.use(subscribersRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

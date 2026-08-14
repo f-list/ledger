@@ -240,6 +240,51 @@ describe('deriveSubscriber', () => {
     assert.equal(state.lastEventTs, 3000);
   });
 
+  it('sets statusChangedTs on the first status-bearing event', () => {
+    const state = deriveSubscriber([paymentEvent(900), subscriptionEvent('new_subscription', 1000)]);
+    assert.equal(state.statusChangedTs, 1000);
+  });
+
+  it('does not move statusChangedTs on payment-only renewals', () => {
+    const state = deriveSubscriber([
+      subscriptionEvent('new_subscription', 1000),
+      paymentEvent(2000),
+      paymentEvent(3000),
+    ]);
+    assert.equal(state.statusChangedTs, 1000);
+    assert.equal(state.lastEventTs, 3000);
+  });
+
+  it('moves statusChangedTs on each transition', () => {
+    const events = [
+      subscriptionEvent('new_subscription', 1000),
+      subscriptionEvent('subscription_cancelled', 2000, { cancelled: true }),
+      subscriptionEvent('subscription_restored', 3000),
+    ];
+    assert.equal(deriveSubscriber(events.slice(0, 2)).statusChangedTs, 2000);
+    assert.equal(deriveSubscriber(events).statusChangedTs, 3000);
+  });
+
+  it('does not move statusChangedTs on same-status snapshots', () => {
+    const state = deriveSubscriber([
+      subscriptionEvent('new_subscription', 1000),
+      subscriptionEvent('recurring_pledge_increased', 2000, {}, { cost: 999 }),
+    ]);
+    assert.equal(state.statusChangedTs, 1000);
+    assert.equal(state.costCents, 999);
+  });
+
+  it('statusChangedTs converges regardless of arrival order', () => {
+    const events = [
+      subscriptionEvent('new_subscription', 1000),
+      subscriptionEvent('subscription_cancelled', 2000, { cancelled: true }),
+      paymentEvent(2500),
+    ];
+    const shuffled = [events[2], events[1], events[0]];
+    assert.equal(deriveSubscriber(events).statusChangedTs, deriveSubscriber(shuffled).statusChangedTs);
+    assert.equal(deriveSubscriber(shuffled).statusChangedTs, 2000);
+  });
+
   it('handles pledge changes as snapshots', () => {
     const state = deriveSubscriber([
       subscriptionEvent('new_subscription', 1000, {}, { cost: 299 }),

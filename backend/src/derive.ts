@@ -166,6 +166,8 @@ export interface SubscriberState {
   nickname: string | null;
   email: string | null;
   lastEventTs: number | null;
+  /** Timestamp of the last status *transition* — payment/passive events never move it. */
+  statusChangedTs: number | null;
 }
 
 /**
@@ -182,11 +184,13 @@ export function deriveSubscriber(events: StoredEvent[]): SubscriberState {
     nickname: null,
     email: null,
     lastEventTs: null,
+    statusChangedTs: null,
   };
 
   const sorted = [...events].sort((a, b) => a.event_ts - b.event_ts);
 
   for (const event of sorted) {
+    const statusBefore = state.status;
     let body: Json;
     try {
       body = asObject(JSON.parse(event.raw));
@@ -222,6 +226,8 @@ export function deriveSubscriber(events: StoredEvent[]): SubscriberState {
       state.tierId = idOrNull(payment.tier_id) ?? state.tierId;
     }
     // Passive and unknown event types never change status.
+
+    if (state.status !== statusBefore) state.statusChangedTs = event.event_ts;
   }
 
   return state;

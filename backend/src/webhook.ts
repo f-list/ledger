@@ -23,15 +23,16 @@ const selectSubscriberEvents = db.prepare(
 
 // Derivation never touches the manual columns (flist_account, notes, seeded).
 const upsertSubscriber = db.prepare(
-  `INSERT INTO subscribers (subscriber_id, status, tier_id, cost_cents, nickname, email, last_event_ts)
-   VALUES (?, ?, ?, ?, ?, ?, ?)
+  `INSERT INTO subscribers (subscriber_id, status, tier_id, cost_cents, nickname, email, last_event_ts, status_changed_ts)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
    ON CONFLICT(subscriber_id) DO UPDATE SET
      status = excluded.status,
      tier_id = excluded.tier_id,
      cost_cents = excluded.cost_cents,
      nickname = excluded.nickname,
      email = excluded.email,
-     last_event_ts = excluded.last_event_ts`,
+     last_event_ts = excluded.last_event_ts,
+     status_changed_ts = excluded.status_changed_ts`,
 );
 
 export function rederiveSubscriber(subscriberId: string): void {
@@ -45,6 +46,7 @@ export function rederiveSubscriber(subscriberId: string): void {
     state.nickname,
     state.email,
     state.lastEventTs,
+    state.statusChangedTs,
   );
 }
 

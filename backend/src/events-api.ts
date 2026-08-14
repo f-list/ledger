@@ -1,6 +1,7 @@
 import express from 'express';
 import { db } from './db.ts';
 import { extractDisplayFields } from './derive.ts';
+import { getTierNameMap } from './tiers-api.ts';
 
 const PAGE_LIMIT = 100;
 
@@ -42,11 +43,7 @@ eventsRouter.get('/api/events', (req, res) => {
   const pageSize = Math.min(limit ?? PAGE_LIMIT, PAGE_LIMIT);
   const rows = selectPage.all({ before: before ?? null, limit: pageSize }) as unknown as EventRow[];
 
-  const tierNames = new Map(
-    (db.prepare('SELECT tier_id, name FROM tiers').all() as unknown as { tier_id: string; name: string }[]).map(
-      (t) => [t.tier_id, t.name],
-    ),
-  );
+  const tierNames = getTierNameMap();
 
   const events = rows.map((row) => {
     const display = extractDisplayFields(row.raw);

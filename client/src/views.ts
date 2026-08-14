@@ -1,5 +1,6 @@
 import { api, ApiError, type User } from './api';
 import { renderEvents } from './events';
+import { renderSubscribers } from './subscribers';
 import { renderTiersPanel } from './tiers';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -83,6 +84,10 @@ export function renderShell(user: User, onLogout: () => void): void {
       <span>Single use, expires in 7 days.</span>
     </div>
     <div id="tiers-container"></div>
+    <nav class="tabs">
+      <button type="button" class="tabs__tab tabs__tab--active" data-view="events">Events</button>
+      <button type="button" class="tabs__tab" data-view="subscribers">Subscribers</button>
+    </nav>
     <main id="content"></main>
   `;
 
@@ -111,8 +116,23 @@ export function renderShell(user: User, onLogout: () => void): void {
   });
 
   const content = app.querySelector<HTMLElement>('#content')!;
+  const views: Record<string, (el: HTMLElement) => void> = {
+    events: renderEvents,
+    subscribers: renderSubscribers,
+  };
+  let activeView = 'events';
+
+  const tabs = [...app.querySelectorAll<HTMLButtonElement>('.tabs__tab')];
+  for (const tab of tabs) {
+    tab.addEventListener('click', () => {
+      activeView = tab.dataset.view ?? 'events';
+      for (const t of tabs) t.classList.toggle('tabs__tab--active', t === tab);
+      views[activeView]?.(content);
+    });
+  }
+
   const tiersPanel = renderTiersPanel(app.querySelector<HTMLElement>('#tiers-container')!, () =>
-    renderEvents(content),
+    views[activeView]?.(content),
   );
   app.querySelector('#tiers-button')!.addEventListener('click', () => tiersPanel.toggle());
 

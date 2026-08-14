@@ -8,6 +8,16 @@ interface TierRow {
   name: string;
 }
 
+/** tier_id → staff-assigned name, for attaching tierName to API rows. */
+export function getTierNameMap(): Map<string, string> {
+  return new Map(
+    (db.prepare('SELECT tier_id, name FROM tiers').all() as unknown as TierRow[]).map((t) => [
+      t.tier_id,
+      t.name,
+    ]),
+  );
+}
+
 export const tiersRouter = express.Router();
 
 tiersRouter.get('/api/tiers', (req, res) => {
