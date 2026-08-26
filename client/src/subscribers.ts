@@ -143,6 +143,13 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
 export function renderSubscribers(container: HTMLElement): void {
   container.innerHTML = `
     <div class="filter-bar">
+      <label>Status
+        <select class="filter-status">
+          <option value="">All</option>
+          <option value="active">Active only</option>
+          <option value="not-active">Except active</option>
+        </select>
+      </label>
       <label>Changed since <input type="datetime-local" class="filter-since" /></label>
       <button type="button" class="filter-clear">Show all</button>
       <span class="filter-count"></span>
@@ -157,6 +164,7 @@ export function renderSubscribers(container: HTMLElement): void {
     <p class="events-error" role="alert" hidden></p>
   `;
 
+  const statusSelect = container.querySelector<HTMLSelectElement>('.filter-status')!;
   const sinceInput = container.querySelector<HTMLInputElement>('.filter-since')!;
   const clearButton = container.querySelector<HTMLButtonElement>('.filter-clear')!;
   const count = container.querySelector<HTMLSpanElement>('.filter-count')!;
@@ -174,22 +182,31 @@ export function renderSubscribers(container: HTMLElement): void {
 
   function applyFilter(): void {
     const sinceMs = sinceInput.value ? new Date(sinceInput.value).getTime() : NaN;
-    const filtered = Number.isFinite(sinceMs)
+    let filtered = Number.isFinite(sinceMs)
       ? all.filter((s) => s.statusChangedTs !== null && s.statusChangedTs * 1000 >= sinceMs)
       : all;
+    if (statusSelect.value === 'active') filtered = filtered.filter((s) => s.status === 'active');
+    else if (statusSelect.value === 'not-active') filtered = filtered.filter((s) => s.status !== 'active');
 
     tbody.textContent = '';
     for (const sub of filtered) tbody.append(renderRow(sub));
     table.hidden = filtered.length === 0;
     empty.hidden = all.length > 0;
-    count.textContent = Number.isFinite(sinceMs)
-      ? `${filtered.length} of ${all.length} changed since ${new Date(sinceMs).toLocaleString()}`
-      : `${all.length} subscribers`;
+    const parts: string[] = [];
+    if (statusSelect.value === 'active') parts.push('active');
+    if (statusSelect.value === 'not-active') parts.push('not active');
+    if (Number.isFinite(sinceMs)) parts.push(`changed since ${new Date(sinceMs).toLocaleString()}`);
+    count.textContent =
+      parts.length > 0
+        ? `${filtered.length} of ${all.length} (${parts.join(', ')})`
+        : `${all.length} subscribers`;
   }
 
+  statusSelect.addEventListener('change', applyFilter);
   sinceInput.addEventListener('change', applyFilter);
   clearButton.addEventListener('click', () => {
     sinceInput.value = '';
+    statusSelect.value = '';
     applyFilter();
   });
 
