@@ -43,11 +43,8 @@ function renderRow(event: LedgerEvent): HTMLTableRowElement {
       `Happened: ${formatTime(event.eventTs)}\nReceived: ${new Date(event.receivedAt).toLocaleString()}`,
     ),
     cell(event.eventType),
-    (event.nickname && event.subscriberId ?
-      linkCell(event.nickname, subscribeStarProfileUrl(event.subscriberId), `Subscriber ID: ${event.subscriberId}`) :
-      cell(event.nickname ?? '(unknown)', event.subscriberId ? `Subscriber ID: ${event.subscriberId}` : undefined)
-    ),
-    cell(event.subscriberId ?? ''),
+    cell(event.nickname ?? '(unknown)'),
+    linkCell(event.subscriberId ?? '', subscribeStarProfileUrl(event.subscriberId ?? ''), `Subscriber ID: ${event.subscriberId ?? ''}`, true),
     cell(event.tierName ?? event.tierId ?? '', event.tierId ? `Tier ID: ${event.tierId}` : undefined),
     cell(formatCost(event.costCents)),
   );
@@ -58,7 +55,7 @@ export function renderEvents(container: HTMLElement): void {
   container.innerHTML = `
     <table class="events-table" hidden>
       <thead>
-        <tr><th>Time</th><th>Event</th><th>Subscriber</th><th>ID</th><th>Tier</th><th>Amount</th></tr>
+        <tr><th>Time</th><th>Event</th><th>Nickname</th><th>SubStar</th><th>Tier</th><th>Amount</th></tr>
       </thead>
       <tbody></tbody>
     </table>

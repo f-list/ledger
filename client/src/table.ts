@@ -7,12 +7,16 @@ export function cell(text: string, title?: string): HTMLTableCellElement {
   return td;
 }
 
-export function linkCell(text: string, href: string, title?: string): HTMLTableCellElement {
+export function linkCell(text: string, href: string, title?: string, newTab = false): HTMLTableCellElement {
   const td = document.createElement('td');
   const a = document.createElement('a');
   a.textContent = text;
   a.href = href;
   if (title) a.title = title;
+  if (newTab) {
+    a.target = '_blank';
+    a.rel = 'noopener';
+  }
   td.append(a);
   return td;
 }

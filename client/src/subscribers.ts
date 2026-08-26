@@ -125,7 +125,8 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
   const changed = sub.statusChangedTs;
   tr.append(
     cell(sub.nickname ?? "(unknown)"),
-    linkCell(sub.subscriberId, subscribeStarProfileUrl(sub.subscriberId), `Subscriber ID: ${sub.subscriberId}`),
+    linkCell(sub.subscriberId, subscribeStarProfileUrl(sub.subscriberId), `Subscriber ID: ${sub.subscriberId}`, true),
+    editableCell(sub, 'flistAccount', 100),
     statusCell,
     cell(
       changed === null ? '' : new Date(changed * 1000).toLocaleDateString(),
@@ -134,7 +135,6 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
     cell(sub.tierName ?? sub.tierId ?? '', sub.tierId ? `Tier ID: ${sub.tierId}` : undefined),
     cell(formatCost(sub.costCents)),
     cell(sub.email ?? ''),
-    editableCell(sub, 'flistAccount', 100),
     editableCell(sub, 'notes', 1000),
   );
   return tr;
@@ -149,7 +149,7 @@ export function renderSubscribers(container: HTMLElement): void {
     </div>
     <table class="events-table subscribers-table" hidden>
       <thead>
-        <tr><th>Subscriber</th><th>SubStar ID</th><th>Status</th><th>Since</th><th>Tier</th><th>Amount</th><th>Email</th><th>F-List</th><th>Notes</th></tr>
+        <tr><th>Subscriber</th><th>SubStar</th><th>F-List</th><th>Status</th><th>Since</th><th>Tier</th><th>Amount</th><th>Email</th><th>Notes</th></tr>
       </thead>
       <tbody></tbody>
     </table>
