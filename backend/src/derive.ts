@@ -224,6 +224,18 @@ export function deriveSubscriber(events: StoredEvent[]): SubscriberState {
     } else if (PAYMENT_EVENTS.has(eventType)) {
       const payment = asObject(payload.payment);
       state.tierId = idOrNull(payment.tier_id) ?? state.tierId;
+      // A successful subscription-fee charge implies an active subscription —
+      // the only signal we get for monthly renewals of pre-ledger subscribers.
+      // Initializer only: subscription snapshots are stronger evidence and are
+      // never overridden by payments. Tips (other `type` values) prove nothing.
+      if (
+        eventType === 'payment_succeed' &&
+        payment.type === 'subscription_fee' &&
+        state.status === 'unknown'
+      ) {
+        state.status = 'active';
+        state.costCents ??= asNumberOrNull(payment.amount);
+      }
     }
     // Passive and unknown event types never change status.
 

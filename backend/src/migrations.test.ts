@@ -13,7 +13,7 @@ function tableColumns(db: DatabaseSync, table: string): string[] {
   );
 }
 
-const LATEST_VERSION = 2;
+const LATEST_VERSION = 3;
 
 describe('runMigrations', () => {
   it('brings a fresh database to the latest version with full schema', () => {
@@ -72,6 +72,19 @@ describe('runMigrations', () => {
     db.prepare(
       "INSERT INTO events (received_at, event_type, event_ts, subscriber_id, raw, request_id) VALUES ('x', 'subscription_cancelled', 2000, '42', ?, 'b')",
     ).run(cancel);
+    // Payment-only subscriber (pre-ledger renewal): migration 3 should mark active.
+    const renewal = JSON.stringify({
+      payload: {
+        payment: { id: 7, amount: 500, subscriber_id: 43, type: 'subscription_fee', tier_id: 6 },
+        pledger: { id: 43, nickname: 'Renewer', email: 'r@example.com' },
+      },
+      event: 'payment_succeed',
+      timestamp: 1500,
+      request_id: 'c',
+    });
+    db.prepare(
+      "INSERT INTO events (received_at, event_type, event_ts, subscriber_id, raw, request_id) VALUES ('x', 'payment_succeed', 1500, '43', ?, 'c')",
+    ).run(renewal);
     // Stale derived row without the new column's data.
     db.prepare(
       "INSERT INTO subscribers (subscriber_id, status, nickname) VALUES ('42', 'active', 'Old')",
@@ -86,5 +99,12 @@ describe('runMigrations', () => {
     assert.equal(row.status, 'cancelled');
     assert.equal(row.status_changed_ts, 2000);
     assert.equal(row.cost_cents, 299);
+
+    const renewer = db
+      .prepare('SELECT status, status_changed_ts, cost_cents FROM subscribers WHERE subscriber_id = ?')
+      .get('43') as unknown as { status: string; status_changed_ts: number; cost_cents: number };
+    assert.equal(renewer.status, 'active');
+    assert.equal(renewer.status_changed_ts, 1500);
+    assert.equal(renewer.cost_cents, 500);
   });
 });

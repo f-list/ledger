@@ -210,8 +210,56 @@ describe('deriveSubscriber', () => {
     assert.equal(state.lastEventTs, 2000);
   });
 
-  it('a payment event alone never invents a status', () => {
-    assert.equal(deriveSubscriber([paymentEvent(1000)]).status, 'unknown');
+  it('a subscription-fee payment alone initializes status to active', () => {
+    // Monthly renewals of pre-ledger subscribers arrive as payment_succeed only.
+    const state = deriveSubscriber([paymentEvent(1000)]);
+    assert.equal(state.status, 'active');
+    assert.equal(state.statusChangedTs, 1000);
+    assert.equal(state.costCents, 299);
+  });
+
+  it('a tip payment alone proves nothing', () => {
+    const tip: StoredEvent = {
+      event_type: 'payment_succeed',
+      event_ts: 1000,
+      raw: JSON.stringify({
+        payload: {
+          payment: { id: 9, amount: 500, subscriber_id: 77, tip_id: 123, type: 'tip' },
+          pledger: { id: 77, nickname: 'Tipper' },
+        },
+        event: 'payment_succeed',
+        timestamp: 1000,
+        request_id: 'tip-1',
+      }),
+    };
+    assert.equal(deriveSubscriber([tip]).status, 'unknown');
+  });
+
+  it('payments never override a known status', () => {
+    const state = deriveSubscriber([
+      subscriptionEvent('new_subscription', 1000),
+      subscriptionEvent('subscription_cancelled', 2000, { cancelled: true }),
+      paymentEvent(3000), // late/out-of-band charge after cancellation
+    ]);
+    assert.equal(state.status, 'cancelled');
+    assert.equal(state.statusChangedTs, 2000);
+  });
+
+  it('a disputed payment alone proves nothing', () => {
+    const disputed: StoredEvent = {
+      event_type: 'payment_disputed',
+      event_ts: 1000,
+      raw: JSON.stringify({
+        payload: {
+          payment: { id: 9, amount: 299, subscriber_id: 77, type: 'subscription_fee' },
+          pledger: { id: 77, nickname: 'D' },
+        },
+        event: 'payment_disputed',
+        timestamp: 1000,
+        request_id: 'disp-1',
+      }),
+    };
+    assert.equal(deriveSubscriber([disputed]).status, 'unknown');
   });
 
   it('email_unshared clears the email', () => {
@@ -241,7 +289,18 @@ describe('deriveSubscriber', () => {
   });
 
   it('sets statusChangedTs on the first status-bearing event', () => {
-    const state = deriveSubscriber([paymentEvent(900), subscriptionEvent('new_subscription', 1000)]);
+    // A tip is not status-bearing; the subscription event after it is.
+    const tip: StoredEvent = {
+      event_type: 'payment_succeed',
+      event_ts: 900,
+      raw: JSON.stringify({
+        payload: { payment: { id: 1, amount: 100, tip_id: 5, type: 'tip' }, pledger: { id: 1 } },
+        event: 'payment_succeed',
+        timestamp: 900,
+        request_id: 't',
+      }),
+    };
+    const state = deriveSubscriber([tip, subscriptionEvent('new_subscription', 1000)]);
     assert.equal(state.statusChangedTs, 1000);
   });
 

@@ -130,6 +130,13 @@ const MIGRATIONS: Migration[] = [
       rederiveAllSubscribers(db);
     },
   },
+  {
+    version: 3,
+    description: 're-derive: subscription-fee payments now initialize status to active',
+    up(db) {
+      rederiveAllSubscribers(db);
+    },
+  },
 ];
 
 export function runMigrations(db: DatabaseSync): void {
