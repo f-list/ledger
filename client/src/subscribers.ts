@@ -65,11 +65,8 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
 
   const changed = sub.statusChangedTs;
   tr.append(
-    (sub.nickname ?
-      linkCell(sub.nickname, `https://www.subscribestar.adult/subscribers/${sub.subscriberId}`, `Subscriber ID: ${sub.subscriberId}`) :
-      cell('(unknown)', sub.subscriberId ? `Subscriber ID: ${sub.subscriberId}` : undefined)
-    ),
-    cell(sub.subscriberId),
+    cell(sub.nickname ?? "(unknown)"),
+    linkCell(sub.subscriberId, `https://www.subscribestar.adult/subscribers/${sub.subscriberId}`, `Subscriber ID: ${sub.subscriberId}`),
     statusCell,
     cell(
       changed === null ? '' : new Date(changed * 1000).toLocaleDateString(),
