@@ -1,4 +1,5 @@
 import { api } from './api';
+import { cell, formatCost, linkCell, subscribeStarProfileUrl } from './table';
 
 interface Subscriber {
   subscriberId: string;
@@ -35,23 +36,6 @@ function relativeTime(unixSeconds: number): string {
   if (days === 1) return '1 day ago';
   if (days < 60) return `${days} days ago`;
   return `${Math.floor(days / 30)} months ago`;
-}
-
-function cell(text: string, title?: string): HTMLTableCellElement {
-  const td = document.createElement('td');
-  td.textContent = text;
-  if (title) td.title = title;
-  return td;
-}
-
-function linkCell(text: string, href: string, title?: string): HTMLTableCellElement {
-  const td = document.createElement('td');
-  const a = document.createElement('a');
-  a.textContent = text;
-  a.href = href;
-  if (title) a.title = title;
-  td.append(a);
-  return td;
 }
 
 function editableCell(
@@ -141,14 +125,14 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
   const changed = sub.statusChangedTs;
   tr.append(
     cell(sub.nickname ?? "(unknown)"),
-    linkCell(sub.subscriberId, `https://www.subscribestar.adult/subscribers/${sub.subscriberId}`, `Subscriber ID: ${sub.subscriberId}`),
+    linkCell(sub.subscriberId, subscribeStarProfileUrl(sub.subscriberId), `Subscriber ID: ${sub.subscriberId}`),
     statusCell,
     cell(
       changed === null ? '' : new Date(changed * 1000).toLocaleDateString(),
       changed === null ? undefined : relativeTime(changed),
     ),
     cell(sub.tierName ?? sub.tierId ?? '', sub.tierId ? `Tier ID: ${sub.tierId}` : undefined),
-    cell(sub.costCents === null ? '' : `$${(sub.costCents / 100).toFixed(2)}`),
+    cell(formatCost(sub.costCents)),
     cell(sub.email ?? ''),
     editableCell(sub, 'flistAccount', 100),
     editableCell(sub, 'notes', 1000),

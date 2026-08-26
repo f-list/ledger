@@ -1,4 +1,5 @@
 import { api } from './api';
+import { cell, formatCost, linkCell, subscribeStarProfileUrl } from './table';
 
 interface LedgerEvent {
   id: number;
@@ -27,29 +28,8 @@ const ROW_CLASS: Record<string, string> = {
   recurring_pledge_decreased: 'event-row--warn',
 };
 
-function formatCost(costCents: number | null): string {
-  return costCents === null ? '' : `$${(costCents / 100).toFixed(2)}`;
-}
-
 function formatTime(unixSeconds: number): string {
   return new Date(unixSeconds * 1000).toLocaleString();
-}
-
-function cell(text: string, title?: string): HTMLTableCellElement {
-  const td = document.createElement('td');
-  td.textContent = text;
-  if (title) td.title = title;
-  return td;
-}
-
-function linkCell(text: string, href: string, title?: string): HTMLTableCellElement {
-  const td = document.createElement('td');
-  const a = document.createElement('a');
-  a.textContent = text;
-  a.href = href;
-  if (title) a.title = title;
-  td.append(a);
-  return td;
 }
 
 function renderRow(event: LedgerEvent): HTMLTableRowElement {
@@ -63,9 +43,9 @@ function renderRow(event: LedgerEvent): HTMLTableRowElement {
       `Happened: ${formatTime(event.eventTs)}\nReceived: ${new Date(event.receivedAt).toLocaleString()}`,
     ),
     cell(event.eventType),
-    (event.nickname ?
-      linkCell(event.nickname, `https://www.subscribestar.adult/subscribers/${event.subscriberId}`, `Subscriber ID: ${event.subscriberId}`) :
-      cell('(unknown)', event.subscriberId ? `Subscriber ID: ${event.subscriberId}` : undefined)
+    (event.nickname && event.subscriberId ?
+      linkCell(event.nickname, subscribeStarProfileUrl(event.subscriberId), `Subscriber ID: ${event.subscriberId}`) :
+      cell(event.nickname ?? '(unknown)', event.subscriberId ? `Subscriber ID: ${event.subscriberId}` : undefined)
     ),
     cell(event.subscriberId ?? ''),
     cell(event.tierName ?? event.tierId ?? '', event.tierId ? `Tier ID: ${event.tierId}` : undefined),
