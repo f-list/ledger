@@ -63,8 +63,23 @@ function editableCell(
   td.className = 'cell--editable';
 
   function renderStatic(): void {
-    td.textContent = sub[field] ?? '';
+    const value = sub[field] ?? '';
+    td.textContent = '';
     td.title = 'Click to edit';
+    if (field === 'flistAccount' && /^\d+$/.test(value)) {
+      // Numeric value = F-List account id; link to the staff lookup panel.
+      const link = document.createElement('a');
+      link.textContent = value;
+      link.href = `https://www.f-list.net/panel/lookup.php?acctid=${value}`;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.title = 'Open in F-List lookup';
+      // Follow the link without triggering the cell's edit handler.
+      link.addEventListener('click', (event) => event.stopPropagation());
+      td.append(link);
+    } else {
+      td.textContent = value;
+    }
   }
 
   function renderEditor(): void {

@@ -252,6 +252,10 @@ $warn: #ffb74d;
 .cell--editable {
   cursor: pointer;
 
+  a {
+    color: $accent;
+  }
+
   &:hover {
     outline: 1px solid $border;
     outline-offset: -1px;
