@@ -57,6 +57,27 @@ The app is subpath-agnostic: it can be mounted at the domain root or under a pre
 
 Run behind a TLS-terminating reverse proxy (the app sets `trust proxy` and marks session cookies `Secure` on HTTPS requests). Point SubscribeStar's webhook setting at `https://<host>/api/webhook/<WEBHOOK_PATH_TOKEN>`.
 
+## Importing subscriber data from CSV
+
+A CLI imports the staff workbook export (the 16-column "Work list" CSV). It fills the manual columns (`flist_account`, `notes`) for subscribers the ledger already knows — **fill-only**: values entered through the UI are never overwritten — and creates placeholder rows (`seeded = 1`) for subscribers that haven't produced webhook events yet. Derived state is never touched; the CSV's `status` column is not trusted at all. Seeded rows start with status `imported` and flip to `active` (a visible change in the "changed since" view) as each subscriber's next renewal payment confirms them; rows still `imported` after a full billing cycle are your lapsed-or-prepaid follow-up list.
+
+```sh
+npm run import -w backend -- path/to/export.csv            # dry run: prints the plan, writes nothing
+npm run import -w backend -- path/to/export.csv --apply    # commits (single transaction)
+```
+
+Always read the dry-run report first. It lists rows that need human attention: rows without a SubscribeStar id, unresolvable duplicate ids, tier titles that don't match any name in the Tiers panel (name tiers **before** importing so tier assignments resolve), and places where the CSV disagrees with values already in the database (the database wins).
+
+Re-running the import is safe — an unchanged CSV produces zero writes.
+
+Against the production container:
+
+```sh
+docker compose cp export.csv app:/app/data/import.csv
+docker compose exec app node backend/src/import-csv.ts /app/data/import.csv          # dry run
+docker compose exec app node backend/src/import-csv.ts /app/data/import.csv --apply
+```
+
 Operational notes:
 
 - SubscribeStar retries failed deliveries at 5/25/125/625 minutes, then **drops the event** – an outage longer than ~13 hours loses events permanently, so keep the service up and monitored.

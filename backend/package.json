@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=../.env src/index.ts",
     "dev": "node --env-file-if-exists=../.env --watch src/index.ts",
+    "import": "node --env-file-if-exists=../.env src/import-csv.ts",
     "test": "node --test",
     "typecheck": "tsc"
   },
