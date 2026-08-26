@@ -4,8 +4,9 @@ import {
   generateInviteToken,
   hashInviteToken,
   isInviteExpired,
+  normalizeManualField,
+  validateNumericId,
   validatePassword,
-  validateTierId,
   validateTierName,
   validateUsername,
 } from './validate.ts';
@@ -59,14 +60,36 @@ describe('validatePassword', () => {
   });
 });
 
-describe('validateTierId', () => {
+describe('validateNumericId', () => {
   it('accepts numeric ids only', () => {
-    assert.equal(validateTierId('101735'), true);
-    assert.equal(validateTierId('1'), true);
-    assert.equal(validateTierId(''), false);
-    assert.equal(validateTierId('101735x'), false);
-    assert.equal(validateTierId('../users'), false);
-    assert.equal(validateTierId(101735), false);
+    assert.equal(validateNumericId('101735'), true);
+    assert.equal(validateNumericId('1'), true);
+    assert.equal(validateNumericId(''), false);
+    assert.equal(validateNumericId('101735x'), false);
+    assert.equal(validateNumericId('../users'), false);
+    assert.equal(validateNumericId(101735), false);
+  });
+});
+
+describe('normalizeManualField', () => {
+  it('marks absent input', () => {
+    assert.deepEqual(normalizeManualField(undefined, 100), { ok: true, absent: true, value: null });
+  });
+
+  it('trims and passes through valid strings', () => {
+    assert.deepEqual(normalizeManualField('  Sindrake  ', 100), { ok: true, absent: false, value: 'Sindrake' });
+    assert.deepEqual(normalizeManualField('x'.repeat(100), 100), { ok: true, absent: false, value: 'x'.repeat(100) });
+  });
+
+  it('treats empty and whitespace-only as clear', () => {
+    assert.deepEqual(normalizeManualField('', 100), { ok: true, absent: false, value: null });
+    assert.deepEqual(normalizeManualField('   ', 100), { ok: true, absent: false, value: null });
+  });
+
+  it('rejects over-cap and non-strings', () => {
+    assert.deepEqual(normalizeManualField('x'.repeat(101), 100), { ok: false });
+    assert.deepEqual(normalizeManualField(42, 100), { ok: false });
+    assert.deepEqual(normalizeManualField(null, 100), { ok: false });
   });
 });
 

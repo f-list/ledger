@@ -1,7 +1,7 @@
 import express from 'express';
 import { db } from './db.ts';
 import { extractDisplayFields } from './derive.ts';
-import { validateTierId, validateTierName } from './validate.ts';
+import { validateNumericId, validateTierName } from './validate.ts';
 
 interface TierRow {
   tier_id: string;
@@ -50,7 +50,7 @@ tiersRouter.get('/api/tiers', (req, res) => {
 
 tiersRouter.put('/api/tiers/:tierId', (req, res) => {
   const tierId = req.params.tierId;
-  if (!validateTierId(tierId)) {
+  if (!validateNumericId(tierId)) {
     res.status(400).json({ error: 'Invalid tier id.' });
     return;
   }

@@ -249,6 +249,25 @@ $warn: #ffb74d;
   }
 }
 
+.cell--editable {
+  cursor: pointer;
+
+  &:hover {
+    outline: 1px solid $border;
+    outline-offset: -1px;
+  }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.1rem 0.3rem;
+  }
+
+  &.cell--error input {
+    border-color: $danger;
+  }
+}
+
 .tiers-panel {
   padding: 0.8rem 1.5rem;
   background: rgba($accent, 0.08);

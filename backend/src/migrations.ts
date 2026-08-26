@@ -137,6 +137,16 @@ const MIGRATIONS: Migration[] = [
       rederiveAllSubscribers(db);
     },
   },
+  {
+    version: 4,
+    description: 'subscribers manual-edit audit columns',
+    up(db) {
+      db.exec(`
+        ALTER TABLE subscribers ADD COLUMN manual_updated_at TEXT;
+        ALTER TABLE subscribers ADD COLUMN manual_updated_by INTEGER REFERENCES users(id);
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: DatabaseSync): void {

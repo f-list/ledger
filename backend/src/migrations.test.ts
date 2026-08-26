@@ -13,7 +13,7 @@ function tableColumns(db: DatabaseSync, table: string): string[] {
   );
 }
 
-const LATEST_VERSION = 3;
+const LATEST_VERSION = 4;
 
 describe('runMigrations', () => {
   it('brings a fresh database to the latest version with full schema', () => {
@@ -23,7 +23,10 @@ describe('runMigrations', () => {
     for (const table of ['users', 'invites', 'sessions', 'events', 'tiers', 'subscribers']) {
       assert.ok(tableColumns(db, table).length > 0, `table ${table} missing`);
     }
-    assert.ok(tableColumns(db, 'subscribers').includes('status_changed_ts'));
+    const subscriberColumns = tableColumns(db, 'subscribers');
+    assert.ok(subscriberColumns.includes('status_changed_ts'));
+    assert.ok(subscriberColumns.includes('manual_updated_at'));
+    assert.ok(subscriberColumns.includes('manual_updated_by'));
   });
 
   it('is a no-op when already at the latest version', () => {

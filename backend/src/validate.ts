@@ -38,9 +38,25 @@ export function validatePassword(password: unknown): password is string {
   return typeof password === 'string' && password.length >= 8 && password.length <= 1024;
 }
 
-/** SubscribeStar tier ids are numeric; rejecting anything else also blocks path abuse. */
-export function validateTierId(tierId: unknown): tierId is string {
-  return typeof tierId === 'string' && /^\d{1,20}$/.test(tierId);
+/** SubscribeStar ids (tiers, subscribers) are numeric; rejecting anything else also blocks path abuse. */
+export function validateNumericId(id: unknown): id is string {
+  return typeof id === 'string' && /^\d{1,20}$/.test(id);
+}
+
+/**
+ * Normalize a manual free-text field from a request body.
+ * `undefined` input → `{ absent: true }`; valid string → trimmed value, with
+ * empty/whitespace meaning "clear" (null); anything else → `{ ok: false }`.
+ */
+export function normalizeManualField(
+  value: unknown,
+  maxLength: number,
+): { ok: true; absent: boolean; value: string | null } | { ok: false } {
+  if (value === undefined) return { ok: true, absent: true, value: null };
+  if (typeof value !== 'string') return { ok: false };
+  const trimmed = value.trim();
+  if (trimmed.length > maxLength) return { ok: false };
+  return { ok: true, absent: false, value: trimmed === '' ? null : trimmed };
 }
 
 export function validateTierName(name: unknown): name is string {

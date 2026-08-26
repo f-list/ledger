@@ -54,6 +54,66 @@ function linkCell(text: string, href: string, title?: string): HTMLTableCellElem
   return td;
 }
 
+function editableCell(
+  sub: Subscriber,
+  field: 'flistAccount' | 'notes',
+  maxLength: number,
+): HTMLTableCellElement {
+  const td = document.createElement('td');
+  td.className = 'cell--editable';
+
+  function renderStatic(): void {
+    td.textContent = sub[field] ?? '';
+    td.title = 'Click to edit';
+  }
+
+  function renderEditor(): void {
+    const input = document.createElement('input');
+    input.value = sub[field] ?? '';
+    input.maxLength = maxLength;
+    let saving = false;
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        saving = true;
+        input.disabled = true;
+        td.classList.remove('cell--error');
+        api<Subscriber>(`/api/subscribers/${sub.subscriberId}`, { [field]: input.value }, 'PATCH').then(
+          (updated) => {
+            sub[field] = updated[field];
+            renderStatic();
+          },
+          (err: unknown) => {
+            saving = false;
+            input.disabled = false;
+            td.classList.add('cell--error');
+            input.title = err instanceof Error ? err.message : 'Failed to save.';
+            input.focus();
+          },
+        );
+      } else if (event.key === 'Escape') {
+        renderStatic();
+      }
+    });
+    input.addEventListener('blur', () => {
+      if (!saving) renderStatic();
+    });
+
+    td.textContent = '';
+    td.title = '';
+    td.append(input);
+    input.focus();
+    input.select();
+  }
+
+  td.addEventListener('click', () => {
+    if (!td.querySelector('input')) renderEditor();
+  });
+
+  renderStatic();
+  return td;
+}
+
 function renderRow(sub: Subscriber): HTMLTableRowElement {
   const tr = document.createElement('tr');
 
@@ -75,8 +135,8 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
     cell(sub.tierName ?? sub.tierId ?? '', sub.tierId ? `Tier ID: ${sub.tierId}` : undefined),
     cell(sub.costCents === null ? '' : `$${(sub.costCents / 100).toFixed(2)}`),
     cell(sub.email ?? ''),
-    cell(sub.flistAccount ?? ''),
-    cell(sub.notes ?? ''),
+    editableCell(sub, 'flistAccount', 100),
+    editableCell(sub, 'notes', 1000),
   );
   return tr;
 }
