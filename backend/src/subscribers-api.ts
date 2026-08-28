@@ -55,6 +55,7 @@ subscribersRouter.patch('/api/subscribers/:subscriberId', (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const flistAccount = normalizeManualField(body.flistAccount, 100);
   const notes = normalizeManualField(body.notes, 1000);
+  const nickname = normalizeManualField(body.nickname, 100);
   if (!flistAccount.ok) {
     res.status(400).json({ error: 'flistAccount must be a string of at most 100 characters.' });
     return;
@@ -63,8 +64,12 @@ subscribersRouter.patch('/api/subscribers/:subscriberId', (req, res) => {
     res.status(400).json({ error: 'notes must be a string of at most 1000 characters.' });
     return;
   }
-  if (flistAccount.absent && notes.absent) {
-    res.status(400).json({ error: 'Provide flistAccount and/or notes.' });
+  if (!nickname.ok) {
+    res.status(400).json({ error: 'nickname must be a string of at most 100 characters.' });
+    return;
+  }
+  if (flistAccount.absent && notes.absent && nickname.absent) {
+    res.status(400).json({ error: 'Provide flistAccount, notes, and/or nickname.' });
     return;
   }
 
@@ -83,6 +88,13 @@ subscribersRouter.patch('/api/subscribers/:subscriberId', (req, res) => {
   if (!notes.absent) {
     sets.push('notes = ?');
     params.push(notes.value);
+  }
+  if (!nickname.absent) {
+    // Unlike the manual columns above, `nickname` is derived: the next webhook
+    // event for this subscriber re-derives it from the payload. Intentional —
+    // this is a stopgap correction for stale names, not a persistent override.
+    sets.push('nickname = ?');
+    params.push(nickname.value);
   }
   db.prepare(`UPDATE subscribers SET ${sets.join(', ')} WHERE subscriber_id = ?`).run(
     ...params,

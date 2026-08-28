@@ -40,8 +40,9 @@ function relativeTime(unixSeconds: number): string {
 
 function editableCell(
   sub: Subscriber,
-  field: 'flistAccount' | 'notes',
+  field: 'flistAccount' | 'notes' | 'nickname',
   maxLength: number,
+  placeholder = '',
 ): HTMLTableCellElement {
   const td = document.createElement('td');
   td.className = 'cell--editable';
@@ -62,7 +63,7 @@ function editableCell(
       link.addEventListener('click', (event) => event.stopPropagation());
       td.append(link);
     } else {
-      td.textContent = value;
+      td.textContent = value === '' ? placeholder : value;
     }
   }
 
@@ -124,7 +125,7 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
 
   const changed = sub.statusChangedTs;
   tr.append(
-    cell(sub.nickname ?? "(unknown)"),
+    editableCell(sub, 'nickname', 100, '(unknown)'),
     linkCell(sub.subscriberId, subscribeStarProfileUrl(sub.subscriberId), `Subscriber ID: ${sub.subscriberId}`, true),
     editableCell(sub, 'flistAccount', 100),
     statusCell,
