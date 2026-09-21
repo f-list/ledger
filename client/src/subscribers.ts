@@ -151,6 +151,13 @@ export function renderSubscribers(container: HTMLElement): void {
           <option value="not-active">Except active</option>
         </select>
       </label>
+      <label>F-List
+        <select class="filter-flist">
+          <option value="">All</option>
+          <option value="has">Linked</option>
+          <option value="none">Not linked</option>
+        </select>
+      </label>
       <label>Changed since <input type="datetime-local" class="filter-since" /></label>
       <button type="button" class="filter-clear">Show all</button>
       <span class="filter-count"></span>
@@ -166,6 +173,7 @@ export function renderSubscribers(container: HTMLElement): void {
   `;
 
   const statusSelect = container.querySelector<HTMLSelectElement>('.filter-status')!;
+  const flistSelect = container.querySelector<HTMLSelectElement>('.filter-flist')!;
   const sinceInput = container.querySelector<HTMLInputElement>('.filter-since')!;
   const clearButton = container.querySelector<HTMLButtonElement>('.filter-clear')!;
   const count = container.querySelector<HTMLSpanElement>('.filter-count')!;
@@ -188,6 +196,8 @@ export function renderSubscribers(container: HTMLElement): void {
       : all;
     if (statusSelect.value === 'active') filtered = filtered.filter((s) => s.status === 'active');
     else if (statusSelect.value === 'not-active') filtered = filtered.filter((s) => s.status !== 'active');
+    if (flistSelect.value === 'has') filtered = filtered.filter((s) => !!s.flistAccount);
+    else if (flistSelect.value === 'none') filtered = filtered.filter((s) => !s.flistAccount);
 
     tbody.textContent = '';
     for (const sub of filtered) tbody.append(renderRow(sub));
@@ -196,6 +206,8 @@ export function renderSubscribers(container: HTMLElement): void {
     const parts: string[] = [];
     if (statusSelect.value === 'active') parts.push('active');
     if (statusSelect.value === 'not-active') parts.push('not active');
+    if (flistSelect.value === 'has') parts.push('F-List linked');
+    if (flistSelect.value === 'none') parts.push('no F-List');
     if (Number.isFinite(sinceMs)) parts.push(`changed since ${new Date(sinceMs).toLocaleString()}`);
     count.textContent =
       parts.length > 0
@@ -204,10 +216,12 @@ export function renderSubscribers(container: HTMLElement): void {
   }
 
   statusSelect.addEventListener('change', applyFilter);
+  flistSelect.addEventListener('change', applyFilter);
   sinceInput.addEventListener('change', applyFilter);
   clearButton.addEventListener('click', () => {
     sinceInput.value = '';
     statusSelect.value = '';
+    flistSelect.value = '';
     applyFilter();
   });
 
