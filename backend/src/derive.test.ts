@@ -218,6 +218,40 @@ describe('deriveSubscriber', () => {
     assert.equal(state.costCents, 299);
   });
 
+  it('a subscription-fee payment recovers a billing_failed subscriber', () => {
+    // Production case: billing failed, later charges succeeded, but SubscribeStar
+    // never sent a subscription_restored to clear the failure.
+    const state = deriveSubscriber([
+      subscriptionEvent('new_subscription', 1000),
+      subscriptionEvent('subscription_billing_failed', 2000, { billing_failed: true }),
+      paymentEvent(3000),
+    ]);
+    assert.equal(state.status, 'active');
+    assert.equal(state.statusChangedTs, 3000); // recovery moves the transition stamp
+  });
+
+  it('a tip payment does not recover a billing_failed subscriber', () => {
+    const tip: StoredEvent = {
+      event_type: 'payment_succeed',
+      event_ts: 3000,
+      raw: JSON.stringify({
+        payload: {
+          payment: { id: 9, amount: 500, subscriber_id: 77, tip_id: 123, type: 'tip' },
+          pledger: { id: 77, nickname: 'Tipper' },
+        },
+        event: 'payment_succeed',
+        timestamp: 3000,
+        request_id: 'tip-bf',
+      }),
+    };
+    const state = deriveSubscriber([
+      subscriptionEvent('subscription_billing_failed', 2000, { billing_failed: true }),
+      tip,
+    ]);
+    assert.equal(state.status, 'billing_failed');
+    assert.equal(state.statusChangedTs, 2000);
+  });
+
   it('a tip payment alone proves nothing', () => {
     const tip: StoredEvent = {
       event_type: 'payment_succeed',

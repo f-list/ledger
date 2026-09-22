@@ -13,7 +13,7 @@ function tableColumns(db: DatabaseSync, table: string): string[] {
   );
 }
 
-const LATEST_VERSION = 4;
+const LATEST_VERSION = 5;
 
 describe('runMigrations', () => {
   it('brings a fresh database to the latest version with full schema', () => {

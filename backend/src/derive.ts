@@ -225,13 +225,16 @@ export function deriveSubscriber(events: StoredEvent[]): SubscriberState {
       const payment = asObject(payload.payment);
       state.tierId = idOrNull(payment.tier_id) ?? state.tierId;
       // A successful subscription-fee charge implies an active subscription —
-      // the only signal we get for monthly renewals of pre-ledger subscribers.
-      // Initializer only: subscription snapshots are stronger evidence and are
-      // never overridden by payments. Tips (other `type` values) prove nothing.
+      // the only signal we get for monthly renewals of pre-ledger subscribers,
+      // and the recovery signal when billing later succeeds but SubscribeStar
+      // never sends a `subscription_restored` (observed in production).
+      // Clears `unknown`/`billing_failed` only: `cancelled`/`paused` are explicit
+      // subscription snapshots that a payment must never override, and tips
+      // (other `type` values) prove nothing.
       if (
         eventType === 'payment_succeed' &&
         payment.type === 'subscription_fee' &&
-        state.status === 'unknown'
+        (state.status === 'unknown' || state.status === 'billing_failed')
       ) {
         state.status = 'active';
         state.costCents ??= asNumberOrNull(payment.amount);

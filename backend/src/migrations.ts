@@ -147,6 +147,13 @@ const MIGRATIONS: Migration[] = [
       `);
     },
   },
+  {
+    version: 5,
+    description: 're-derive: subscription-fee payments now clear billing_failed',
+    up(db) {
+      rederiveAllSubscribers(db);
+    },
+  },
 ];
 
 export function runMigrations(db: DatabaseSync): void {
