@@ -20,6 +20,9 @@ Wants=network-online.target
 # Dedicated, unprivileged service account that owns the tunnel key + known_hosts
 # and the `flist-db` ssh config alias. Change to whichever user has `ssh flist-db`
 # working if you are not creating a separate account.
+# NOTE: if you change User, also change the absolute UserKnownHostsFile path
+# below to that user's home. Do NOT use %h there — for a system service systemd
+# expands %h to /root regardless of User=, so ssh would read the wrong file.
 User=flist-tunnel
 
 # -N: no remote command (forward only)   -T: no PTY
@@ -32,7 +35,7 @@ ExecStart=/usr/bin/ssh -N -T \
   -o ServerAliveInterval=30 \
   -o ServerAliveCountMax=3 \
   -o StrictHostKeyChecking=yes \
-  -o UserKnownHostsFile=%h/.ssh/known_hosts \
+  -o UserKnownHostsFile=/home/flist-tunnel/.ssh/known_hosts \
   -o IdentitiesOnly=yes \
   -L 172.28.0.1:15432:127.0.0.1:5432 \
   flist-db

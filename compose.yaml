@@ -13,10 +13,9 @@ services:
       - WEBHOOK_PATH_TOKEN=${WEBHOOK_PATH_TOKEN:?WEBHOOK_PATH_TOKEN must be set}
       # Optional: read-only F-List Postgres via the host SSH tunnel (see
       # deploy/README-flist-tunnel.md). Unset => F-List status check disabled.
+      # Point FLIST_DB_URL at the pinned gateway 172.28.0.1 (where the tunnel
+      # binds) — NOT host.docker.internal, which resolves to docker0 (172.17.0.1).
       - FLIST_DB_URL=${FLIST_DB_URL:-}
-    extra_hosts:
-      # Lets the container reach the host-side tunnel bound to the bridge gateway.
-      - "host.docker.internal:host-gateway"
     volumes:
       - data:/app/data
 
@@ -25,8 +24,8 @@ volumes:
 
 networks:
   default:
-    # Pin the subnet so the gateway the tunnel binds to (172.28.0.1) is stable.
-    # Change if it collides with your host network.
+    # Pin the subnet so the gateway the tunnel binds to (172.28.0.1) — and which
+    # the app connects to — is stable. Change if it collides with your host net.
     ipam:
       config:
         - subnet: 172.28.0.0/16

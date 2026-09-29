@@ -111,14 +111,12 @@ compose network is up. (`journalctl -u flist-tunnel.service -f` to watch.)
 
 ## 8. Wire the app container to the tunnel (compose)
 
-The gateway IP `172.28.0.1` must be deterministic, so pin the network subnet and
-map `host.docker.internal`. Add to `compose.yaml`:
+Pin the network subnet so the gateway IP `172.28.0.1` (where the tunnel binds) is
+deterministic, and have the app connect to it **directly**. Add to `compose.yaml`:
 
 ```yaml
 services:
   app:
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     environment:
       - FLIST_DB_URL=${FLIST_DB_URL:-}
 
@@ -129,10 +127,16 @@ networks:
         - subnet: 172.28.0.0/16   # change if it collides with your network
 ```
 
+Do NOT use `host.docker.internal`: with `host-gateway` it resolves to the daemon's
+default `docker0` bridge (172.17.0.1), *not* this pinned network's gateway, so a
+tunnel bound to 172.28.0.1 would be unreachable (ECONNREFUSED 172.17.0.1). The app
+container is on the `172.28.0.0/16` network, so `172.28.0.1` is its gateway (the
+host) and is reachable directly.
+
 Then set the connection string in `.env` (the loopback leg is inside SSH, so no TLS):
 
 ```
-FLIST_DB_URL=postgres://<ro-user>:<ro-password>@host.docker.internal:15432/<db-name>?sslmode=disable
+FLIST_DB_URL=postgres://<ro-user>:<ro-password>@172.28.0.1:15432/<db-name>?sslmode=disable
 ```
 
 `FLIST_DB_URL` is optional: leave it unset and the status-check feature is simply
@@ -144,7 +148,7 @@ disabled (dev/test need no tunnel).
 docker compose up -d
 docker compose exec app node -e '
   const net = require("net");
-  const s = net.connect(15432, "host.docker.internal")
+  const s = net.connect(15432, "172.28.0.1")
     .on("connect", () => { console.log("tunnel reachable"); s.end(); })
     .on("error", e => { console.error("unreachable:", e.message); process.exit(1); });
 '
