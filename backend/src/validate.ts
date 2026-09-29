@@ -59,6 +59,15 @@ export function normalizeManualField(
   return { ok: true, absent: false, value: trimmed === '' ? null : trimmed };
 }
 
+/**
+ * A `flist_account` mapping is usable for a status check only when it is a bare
+ * numeric F-List account id (matching the client's numeric-detection for the
+ * lookup link). Names can't be resolved to an id without extra lookups.
+ */
+export function isFlistAccountId(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{1,20}$/.test(value);
+}
+
 export function validateTierName(name: unknown): name is string {
   return typeof name === 'string' && name.trim().length >= 1 && name.trim().length <= 64;
 }

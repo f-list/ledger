@@ -13,9 +13,15 @@ interface Subscriber {
   costCents: number | null;
   flistAccount: string | null;
   notes: string | null;
+  flistSubscribed: number | null;
+  flistCheckedAt: string | null;
 }
 
 const LAST_VISIT_KEY = 'subscribers-last-visit';
+
+// Whether the server can reach F-List's DB; set from the /api/subscribers
+// response. When false, the F-List Sub cell is shown but not clickable.
+let flistCheckConfigured = false;
 
 const CHIP_CLASS: Record<string, string> = {
   active: 'chip--good',
@@ -114,8 +120,61 @@ function editableCell(
   return td;
 }
 
+/**
+ * Cross-compare SubscribeStar's derived status with F-List's cached flag.
+ * 'grant' = active here but not subscribed on F-List (owed a role grant);
+ * 'removal' = cancelled here but still subscribed on F-List (owed a removal).
+ */
+function mismatch(sub: Subscriber): 'grant' | 'removal' | null {
+  if (sub.status === 'active' && sub.flistSubscribed === 0) return 'grant';
+  if (sub.status === 'cancelled' && sub.flistSubscribed === 1) return 'removal';
+  return null;
+}
+
+function flistSubCell(sub: Subscriber, rerenderRow: () => void): HTMLTableCellElement {
+  const td = document.createElement('td');
+  const chip = document.createElement('span');
+  const state = sub.flistSubscribed;
+  chip.className = `chip ${state === 1 ? 'chip--good' : 'chip--muted'}`;
+  chip.textContent = state === 1 ? '✓' : state === 0 ? '✗' : '?';
+  td.append(chip);
+
+  const checkedNote = sub.flistCheckedAt
+    ? `Checked ${relativeTime(new Date(sub.flistCheckedAt).getTime() / 1000)}`
+    : 'Never checked';
+  const checkable = flistCheckConfigured && /^\d+$/.test(sub.flistAccount ?? '');
+  if (!checkable) {
+    td.title = !flistCheckConfigured
+      ? 'F-List lookup is not configured'
+      : `${checkedNote} — set a numeric F-List account id to check`;
+    return td;
+  }
+
+  td.className = 'cell--checkable';
+  td.title = `${checkedNote} — click to check F-List`;
+  td.addEventListener('click', () => {
+    if (td.classList.contains('cell--checking')) return;
+    td.classList.add('cell--checking');
+    td.classList.remove('cell--error');
+    api<Subscriber>(`/api/subscribers/${sub.subscriberId}/flist-check`, {}).then(
+      (updated) => {
+        sub.flistSubscribed = updated.flistSubscribed;
+        sub.flistCheckedAt = updated.flistCheckedAt;
+        rerenderRow(); // recompute the chip and the mismatch highlight
+      },
+      (err: unknown) => {
+        td.classList.remove('cell--checking');
+        td.classList.add('cell--error');
+        td.title = err instanceof Error ? err.message : 'Check failed.';
+      },
+    );
+  });
+  return td;
+}
+
 function renderRow(sub: Subscriber): HTMLTableRowElement {
   const tr = document.createElement('tr');
+  const rerenderRow = () => tr.replaceWith(renderRow(sub));
 
   const statusCell = document.createElement('td');
   const chip = document.createElement('span');
@@ -123,12 +182,16 @@ function renderRow(sub: Subscriber): HTMLTableRowElement {
   chip.textContent = sub.status;
   statusCell.append(chip);
 
+  const owed = mismatch(sub);
+  if (owed) tr.classList.add(owed === 'grant' ? 'row--grant-owed' : 'row--removal-owed');
+
   const changed = sub.statusChangedTs;
   tr.append(
     editableCell(sub, 'nickname', 100, '(unknown)'),
     linkCell(sub.subscriberId, subscribeStarProfileUrl(sub.subscriberId), `Subscriber ID: ${sub.subscriberId}`, true),
     editableCell(sub, 'flistAccount', 100),
     statusCell,
+    flistSubCell(sub, rerenderRow),
     cell(
       changed === null ? '' : new Date(changed * 1000).toLocaleDateString(),
       changed === null ? undefined : relativeTime(changed),
@@ -164,7 +227,7 @@ export function renderSubscribers(container: HTMLElement): void {
     </div>
     <table class="events-table subscribers-table" hidden>
       <thead>
-        <tr><th>Subscriber</th><th>SubStar</th><th>F-List</th><th>Status</th><th>Since</th><th>Tier</th><th>Amount</th><th>Email</th><th>Notes</th></tr>
+        <tr><th>Subscriber</th><th>SubStar</th><th>F-List</th><th>Status</th><th>F-List Sub</th><th>Since</th><th>Tier</th><th>Amount</th><th>Email</th><th>Notes</th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -225,8 +288,9 @@ export function renderSubscribers(container: HTMLElement): void {
     applyFilter();
   });
 
-  api<{ subscribers: Subscriber[] }>('/api/subscribers').then(
+  api<{ subscribers: Subscriber[]; flistCheckConfigured: boolean }>('/api/subscribers').then(
     (page) => {
+      flistCheckConfigured = page.flistCheckConfigured;
       all = page.subscribers.sort(
         (a, b) => (b.statusChangedTs ?? -Infinity) - (a.statusChangedTs ?? -Infinity),
       );

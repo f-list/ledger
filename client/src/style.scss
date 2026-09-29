@@ -273,6 +273,37 @@ $warn: #ffb74d;
   }
 }
 
+.cell--checkable {
+  cursor: pointer;
+
+  &:hover {
+    outline: 1px solid $border;
+    outline-offset: -1px;
+  }
+
+  &.cell--checking {
+    opacity: 0.5;
+    cursor: progress;
+  }
+
+  &.cell--error .chip {
+    color: $danger;
+    border-color: $danger;
+  }
+}
+
+// SubscribeStar-vs-F-List disagreement: action is owed. Grant-owed (active here,
+// no F-List role) and removal-owed (cancelled here, still has the role).
+.row--grant-owed {
+  background: rgba($warn, 0.12);
+  box-shadow: inset 3px 0 0 $warn;
+}
+
+.row--removal-owed {
+  background: rgba($danger, 0.12);
+  box-shadow: inset 3px 0 0 $danger;
+}
+
 .tiers-panel {
   padding: 0.8rem 1.5rem;
   background: rgba($accent, 0.08);

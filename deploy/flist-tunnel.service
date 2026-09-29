@@ -1,0 +1,51 @@
+# SSH tunnel: ledger host -> F-List Postgres (read-only).
+#
+# F-List's pg_hba.conf accepts local connections only, so the ledger reaches
+# Postgres through this forward. The local end binds to the Docker bridge
+# gateway (172.28.0.1) so the app container can reach it via
+# host.docker.internal, WITHOUT publishing the port on any public interface.
+#
+# See docs/8-flist-status-check.md ("Transport") and deploy/README-flist-tunnel.md.
+#
+# Install to /etc/systemd/system/flist-tunnel.service, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now flist-tunnel.service
+
+[Unit]
+Description=SSH tunnel to F-List Postgres (read-only) for the subscriber ledger
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+# Dedicated, unprivileged service account that owns the tunnel key + known_hosts
+# and the `flist-db` ssh config alias. Change to whichever user has `ssh flist-db`
+# working if you are not creating a separate account.
+User=flist-tunnel
+
+# -N: no remote command (forward only)   -T: no PTY
+# ExitOnForwardFailure: if the local bind fails (e.g. the docker bridge is not up
+#   yet), exit so systemd restarts instead of sitting there tunnel-less.
+# ServerAlive*: drop and exit within ~90s of a dead link so systemd reconnects.
+# StrictHostKeyChecking=yes: rely on the pre-seeded known_hosts (no TOFU).
+ExecStart=/usr/bin/ssh -N -T \
+  -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile=%h/.ssh/known_hosts \
+  -o IdentitiesOnly=yes \
+  -L 172.28.0.1:15432:127.0.0.1:5432 \
+  flist-db
+
+Restart=always
+RestartSec=5s
+
+# Hardening — the tunnel needs only to read its key/known_hosts and open a socket.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

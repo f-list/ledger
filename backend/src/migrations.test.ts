@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
-import { runMigrations } from './migrations.ts';
+import { rederiveAllSubscribers, runMigrations } from './migrations.ts';
 
 function userVersion(db: DatabaseSync): number {
   return (db.prepare('PRAGMA user_version').get() as unknown as { user_version: number }).user_version;
@@ -13,7 +13,7 @@ function tableColumns(db: DatabaseSync, table: string): string[] {
   );
 }
 
-const LATEST_VERSION = 5;
+const LATEST_VERSION = 6;
 
 describe('runMigrations', () => {
   it('brings a fresh database to the latest version with full schema', () => {
@@ -27,6 +27,8 @@ describe('runMigrations', () => {
     assert.ok(subscriberColumns.includes('status_changed_ts'));
     assert.ok(subscriberColumns.includes('manual_updated_at'));
     assert.ok(subscriberColumns.includes('manual_updated_by'));
+    assert.ok(subscriberColumns.includes('flist_subscribed'));
+    assert.ok(subscriberColumns.includes('flist_checked_at'));
   });
 
   it('is a no-op when already at the latest version', () => {
@@ -109,5 +111,43 @@ describe('runMigrations', () => {
     assert.equal(renewer.status, 'active');
     assert.equal(renewer.status_changed_ts, 1500);
     assert.equal(renewer.cost_cents, 500);
+  });
+
+  it('preserves the F-List status cache across re-derivation', () => {
+    // The cache columns are a third category (not derived, not manual) and must
+    // survive a full re-derive — they are absent from the derive upsert.
+    const db = new DatabaseSync(':memory:');
+    runMigrations(db);
+    const subscribe = JSON.stringify({
+      payload: {
+        subscription: { id: 1, tier_id: 5, cost: 299, subscriber_id: 42, cancelled: false, paused: false, billing_failed: false },
+        subscriber: { id: 42, nickname: 'Nick', email: 'n@example.com' },
+      },
+      event: 'new_subscription',
+      timestamp: 1000,
+      request_id: 'a',
+    });
+    db.prepare(
+      "INSERT INTO events (received_at, event_type, event_ts, subscriber_id, raw, request_id) VALUES ('x', 'new_subscription', 1000, '42', ?, 'a')",
+    ).run(subscribe);
+    // A cached row with a stale derived status but a populated F-List cache.
+    db.prepare(
+      "INSERT INTO subscribers (subscriber_id, status, flist_subscribed, flist_checked_at) VALUES ('42', 'unknown', 1, '2026-09-01T00:00:00.000Z')",
+    ).run();
+
+    rederiveAllSubscribers(db);
+
+    const row = db
+      .prepare(
+        'SELECT status, flist_subscribed, flist_checked_at FROM subscribers WHERE subscriber_id = ?',
+      )
+      .get('42') as unknown as {
+      status: string;
+      flist_subscribed: number | null;
+      flist_checked_at: string | null;
+    };
+    assert.equal(row.status, 'active'); // derived column updated
+    assert.equal(row.flist_subscribed, 1); // cache untouched
+    assert.equal(row.flist_checked_at, '2026-09-01T00:00:00.000Z');
   });
 });

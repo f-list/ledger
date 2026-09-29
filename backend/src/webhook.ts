@@ -9,6 +9,7 @@ import {
   stripShippingAddress,
   type StoredEvent,
 } from './derive.ts';
+import { runFlistCheck } from './subscribers-api.ts';
 import { signBody, timingSafeStringEqual } from './validate.ts';
 
 const insertEvent = db.prepare(
@@ -113,5 +114,15 @@ webhookRouter.post(
       `webhook: stored ${envelope.eventType ?? 'unknown'} for subscriber ${envelope.subscriberId ?? '?'} (${envelope.requestId ?? 'no request_id'})`,
     );
     res.json({ ok: true });
+
+    // Refresh the cached F-List status off the critical path. Fire-and-forget
+    // after the ack: runFlistCheck no-ops when unconfigured or unmapped, and any
+    // failure only logs — it must never affect the 200 above (SubscribeStar
+    // retries on 5xx). Mirrors the "ack even if derivation fails" rule.
+    if (isKnownEventType(envelope.eventType) && envelope.subscriberId !== null) {
+      void runFlistCheck(envelope.subscriberId).catch((err) =>
+        console.error(`webhook: F-List check failed for subscriber ${envelope.subscriberId}:`, err),
+      );
+    }
   },
 );

@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   generateInviteToken,
   hashInviteToken,
+  isFlistAccountId,
   isInviteExpired,
   normalizeManualField,
   validateNumericId,
@@ -68,6 +69,18 @@ describe('validateNumericId', () => {
     assert.equal(validateNumericId('101735x'), false);
     assert.equal(validateNumericId('../users'), false);
     assert.equal(validateNumericId(101735), false);
+  });
+});
+
+describe('isFlistAccountId', () => {
+  it('accepts a bare numeric account id, rejects names and junk', () => {
+    assert.equal(isFlistAccountId('710764'), true);
+    assert.equal(isFlistAccountId('1'), true);
+    assert.equal(isFlistAccountId(''), false);
+    assert.equal(isFlistAccountId('Kira'), false);
+    assert.equal(isFlistAccountId('123abc'), false);
+    assert.equal(isFlistAccountId(null), false);
+    assert.equal(isFlistAccountId(710764), false);
   });
 });
 

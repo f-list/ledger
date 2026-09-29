@@ -32,4 +32,8 @@ export const config = {
   bootstrapInviteToken: process.env.BOOTSTRAP_INVITE_TOKEN,
   webhookSecret: requiredInProduction('WEBHOOK_SECRET', 'dev-webhook-secret'),
   webhookPathToken: requiredInProduction('WEBHOOK_PATH_TOKEN', 'dev'),
+  // Read-only libpq DSN for F-List's Postgres (via the SSH tunnel). Optional:
+  // when unset, the F-List status-check feature is disabled everywhere, so dev
+  // and tests need no F-List access.
+  flistDbUrl: process.env.FLIST_DB_URL,
 };

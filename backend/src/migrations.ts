@@ -23,7 +23,7 @@ interface Migration {
   up: (db: DatabaseSync) => void;
 }
 
-function rederiveAllSubscribers(db: DatabaseSync): void {
+export function rederiveAllSubscribers(db: DatabaseSync): void {
   const ids = db
     .prepare('SELECT DISTINCT subscriber_id AS id FROM events WHERE subscriber_id IS NOT NULL')
     .all() as unknown as { id: string }[];
@@ -152,6 +152,20 @@ const MIGRATIONS: Migration[] = [
     description: 're-derive: subscription-fee payments now clear billing_failed',
     up(db) {
       rederiveAllSubscribers(db);
+    },
+  },
+  {
+    version: 6,
+    description: 'subscribers F-List status cache',
+    up(db) {
+      // Externally-fetched cache of F-List's account.subscribed for the linked
+      // account: 1 = subscribed, 0 = not, NULL = unknown/never checked. Neither
+      // derived from events nor manually typed — re-derivation must never touch
+      // these (they are absent from the derive upserts), so no backfill here.
+      db.exec(`
+        ALTER TABLE subscribers ADD COLUMN flist_subscribed INTEGER;
+        ALTER TABLE subscribers ADD COLUMN flist_checked_at TEXT;
+      `);
     },
   },
 ];
